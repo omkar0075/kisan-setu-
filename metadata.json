@@ -1,0 +1,8 @@
+{
+  "name": "Kisan Setu - AI Soil Analyst",
+  "description": "A multi-lingual AI powered tool for farmers to analyze soil test reports and get actionable agricultural advice.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
