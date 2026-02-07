@@ -162,12 +162,12 @@ export const getGovernmentSchemes = async (location: string, language: LanguageC
     4. https://www.mygov.in
     5. https://doordarshan.gov.in/ddkisan
     
-    Select 20-25 major active and beneficial government schemes for farmers from these sources.
+    Select 30-40 major active and beneficial government schemes for farmers from these sources.
     
     For EACH scheme, generate:
-    1. A detailed explanation (approx 5 lines) in simple, easy-to-understand language.
-    2. At least 5 specific benefits (bullet points).
-    3. Detailed, step-by-step application process (as many steps as needed to be clear).
+    1. A detailed explanation (approximately 5 short lines/sentences) written in very simple, easy-to-understand language. Keep each sentence short and actionable.
+    2. At least 5 specific benefits (bullet points) that explain why the scheme helps farmers in practical terms.
+    3. A clear, detailed, step-by-step application process using short numbered steps. Make steps easy to follow for farmers with limited digital experience (e.g., include visits to local CSC, required documents, and alternatives).
     
     STRICTLY output the response in valid JSON format ONLY.
     Translate all content to ${targetLanguage}.
@@ -207,31 +207,98 @@ export const getGovernmentSchemes = async (location: string, language: LanguageC
       schemes: [
         {
           name: "PM-Kisan Samman Nidhi",
-          description: "Financial support for landholding farmers.",
-          benefits: ["₹6,000 per year income support in 3 installments"],
-          stepsToClaim: ["Register on pmkisan.gov.in", "Visit local CSC"],
+          description: "PM-Kisan gives small cash support directly to eligible landholding farmers. It helps meet basic cultivation and household expenses. Payments are transferred to the farmer's bank account in 3 instalments per year. Registration is simple and can be done through local CSC or online. This support improves cash flow during sowing and harvesting seasons.",
+          benefits: [
+            "Direct cash into farmer's bank account for immediate use",
+            "Helps cover input costs like seeds and fertiliser",
+            "Reduces dependency on informal loans with high interest",
+            "Improves household financial stability during lean months",
+            "Easy access through local Common Service Centres (CSCs)"
+          ],
+          stepsToClaim: [
+            "Collect Aadhaar, land record (khata), and bank details",
+            "Visit your nearest Common Service Centre (CSC) or local agriculture office",
+            "Fill the PM-Kisan registration form and submit required documents",
+            "Wait for verification (usually a few weeks) and track status online",
+            "Receive instalments directly in your bank account once approved"
+          ],
           officialLink: "https://pmkisan.gov.in"
         },
         {
           name: "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
-          description: "Crop insurance scheme to provide financial support to farmers suffering crop loss/damage.",
-          benefits: ["Coverage for crop loss", "Low premium"],
-          stepsToClaim: ["Apply at bank or CSC", "Register on pmfby.gov.in"],
+          description: "PMFBY provides affordable crop insurance against yield losses from natural calamities. The scheme protects farmers from income loss due to weather, pests, or disease. Premium rates are subsidised and depend on the crop and season. Claims are processed after yield assessment or notified losses. This insurance helps farmers recover and replant without severe financial strain.",
+          benefits: [
+            "Financial protection against crop loss due to natural calamities",
+            "Low, subsidised premium rates for farmers",
+            "Quick assessment and compensation process for many events",
+            "Encourages investment in better inputs and technology",
+            "Available through banks and authorised insurance providers"
+          ],
+          stepsToClaim: [
+            "Keep records of sowing dates and crop type",
+            "Register for PMFBY at your bank branch, insurance office, or CSC before the cut-off",
+            "Pay the applicable premium (often partially subsidised)",
+            "In case of loss, inform the insurer/local authority immediately and provide evidence",
+            "Complete required damage assessment steps and submit documents for claim settlement"
+          ],
           officialLink: "https://pmfby.gov.in"
         },
         {
           name: "Kisan Credit Card (KCC)",
-          description: "Credit card for farmers to meet cultivation expenses.",
-          benefits: ["Low interest loans", "Flexible repayment"],
-          stepsToClaim: ["Visit your bank branch", "Submit land documents"],
+          description: "KCC provides short-term credit to farmers for cultivation and allied activities. It offers flexible withdrawal and repayment tailored to crop cycles. Interest rates are competitive and can include concessions for timely repayment. KCC supports purchase of seeds, fertilisers, equipment, and other farm inputs. It also builds credit history for farmers to access larger loans.",
+          benefits: [
+            "Quick and flexible access to working capital for farming",
+            "Lower interest rates compared to informal lenders",
+            "Repayment schedules aligned with crop harvests",
+            "Helps purchase inputs timely to improve yields",
+            "Builds formal credit history for future loans"
+          ],
+          stepsToClaim: [
+            "Visit a bank branch that offers KCC with identity and land documents",
+            "Submit Aadhaar, land ownership papers, and recent land tax receipts",
+            "Fill KCC application and provide proposed credit limit details",
+            "Bank verifies documents and may inspect the land",
+            "On approval, KCC is issued and funds are available as per limit"
+          ],
           officialLink: "https://pmkisan.gov.in"
         },
         {
           name: "Soil Health Card Scheme",
-          description: "Provides information to farmers on nutrient status of their soil.",
-          benefits: ["Soil nutrient status report", "Fertilizer recommendations"],
-          stepsToClaim: ["Collect soil sample", "Submit to testing lab"],
+          description: "The Soil Health Card Scheme gives farmers a detailed report on soil nutrient status. The card lists pH, organic carbon, and macro/micronutrient levels for the sampled field. It recommends the right type and quantity of fertilisers to improve soil health. Regular testing helps track improvements and reduce unnecessary fertiliser use. Farmers can use recommendations to increase yield and save money.",
+          benefits: [
+            "Know exact nutrient needs of your soil",
+            "Avoid overuse of fertilisers and save costs",
+            "Better crop recommendations and higher yields",
+            "Monitors soil health changes over time",
+            "Supports sustainable and balanced fertiliser use"
+          ],
+          stepsToClaim: [
+            "Collect soil sample as per instructions (depth and quantity)",
+            "Submit the sample to the nearest soil testing lab or collection centre",
+            "Receive the Soil Health Card with test results and recommendations",
+            "Follow the recommended fertiliser and crop practices",
+            "Re-test periodically (every 2-3 years) to monitor changes"
+          ],
           officialLink: "https://soilhealth.dac.gov.in"
+        },
+        {
+          name: "National Agriculture Market (e-NAM) Support",
+          description: "e-NAM connects farmers to national markets and creates better price discovery. By listing produce on e-NAM, farmers can access larger buyer pools and competitive bids. The platform helps get fairer prices and reduces the need to rely on local middlemen. Integration with mandi infrastructure enables easier trade. Training and onboarding support are offered at local mandis and through state agencies.",
+          benefits: [
+            "Access to a wider market and more buyers",
+            "Transparent price discovery and competitive bids",
+            "Reduced dependence on local intermediaries",
+            "Improved market linkages for surplus produce",
+            "Supports digital record-keeping and traceability"
+          ],
+          stepsToClaim: [
+            "Register as a seller on the e-NAM portal or through the local mandi",
+            "Provide required identity and farm/plot details",
+            "List produce with quality and quantity details on the platform",
+            "Accept bids or participate in e-auctions as available",
+            "Complete payment and logistics arrangements as per mandi rules"
+          ],
+          officialLink: "https://enam.gov.in"
         }
       ]
     };
