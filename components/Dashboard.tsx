@@ -16,13 +16,14 @@ import {
   Zap,
   Leaf,
   MessagesSquare
+  , MapPin, CloudSun
 } from 'lucide-react';
 
 interface Props {
   text: Translation;
-  onNavigate: (view: 'home' | 'upload' | 'chat' | 'news' | 'schemes') => void;
+  onNavigate: (view: 'home' | 'upload' | 'chat' | 'news' | 'schemes' | 'soil_guide' | 'nearby_labs') => void;
   onLogout: () => void;
-  activeView: 'home' | 'upload' | 'chat' | 'news' | 'schemes';
+  activeView: 'home' | 'upload' | 'chat' | 'news' | 'schemes' | 'soil_guide' | 'nearby_labs';
   children: React.ReactNode;
   isDarkMode: boolean;
   toggleTheme: () => void;
@@ -191,6 +192,44 @@ const Dashboard: React.FC<Props> = ({
                            {text.feature1Desc}
                         </p>
                      </div>
+                    {/* Additional Features - News, Schemes, Upload */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-8">
+                      <div className="flex flex-col items-center text-center group">
+                        <div className="w-16 h-16 bg-orange-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-orange-600 mb-6 group-hover:bg-orange-100 dark:group-hover:bg-slate-700 transition-colors duration-300">
+                          <Newspaper className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-bold text-earth-900 dark:text-white mb-3">
+                          {text.newsTitle}
+                        </h3>
+                        <p className="text-earth-600 dark:text-slate-400 leading-relaxed">
+                          {text.newsSubtitle}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-center text-center group">
+                        <div className="w-16 h-16 bg-violet-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-violet-600 mb-6 group-hover:bg-violet-100 dark:group-hover:bg-slate-700 transition-colors duration-300">
+                          <Landmark className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-bold text-earth-900 dark:text-white mb-3">
+                          {text.schemesTitle}
+                        </h3>
+                        <p className="text-earth-600 dark:text-slate-400 leading-relaxed">
+                          {text.schemesSubtitle}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-center text-center group">
+                        <div className="w-16 h-16 bg-emerald-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-100 dark:group-hover:bg-slate-700 transition-colors duration-300">
+                          <UploadCloud className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-bold text-earth-900 dark:text-white mb-3">
+                          {text.uploadReport}
+                        </h3>
+                        <p className="text-earth-600 dark:text-slate-400 leading-relaxed">
+                          {text.dragDrop}
+                        </p>
+                      </div>
+                    </div>
 
                      {/* Feature 2 */}
                      <div className="flex flex-col items-center text-center group">
@@ -205,6 +244,24 @@ const Dashboard: React.FC<Props> = ({
                         </p>
                      </div>
 
+                    {/* Nearby Labs & Soil Testing Guide */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
+                      <button onClick={() => onNavigate('nearby_labs')} className="flex flex-col items-center text-center group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-earth-100 dark:border-slate-700 hover:shadow-md transition-all">
+                        <div className="w-16 h-16 bg-leaf-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-leaf-600 dark:text-leaf-400 mb-4">
+                          <MapPin className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-lg font-bold text-earth-900 dark:text-white mb-2">{text.nearbyLabsTitle}</h3>
+                        <p className="text-earth-600 dark:text-slate-400 text-sm leading-relaxed">{text.nearbyLabsSubtitle}</p>
+                      </button>
+
+                      <button onClick={() => onNavigate('soil_guide')} className="flex flex-col items-center text-center group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-earth-100 dark:border-slate-700 hover:shadow-md transition-all">
+                        <div className="w-16 h-16 bg-blue-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                          <CloudSun className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-lg font-bold text-earth-900 dark:text-white mb-2">{text.guideTitle}</h3>
+                        <p className="text-earth-600 dark:text-slate-400 text-sm leading-relaxed">{text.guideSubtitle}</p>
+                      </button>
+                    </div>
                      {/* Feature 3 */}
                      <div className="flex flex-col items-center text-center group">
                         <div className="w-16 h-16 bg-teal-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 mb-6 group-hover:bg-teal-100 dark:group-hover:bg-slate-700 transition-colors duration-300">
