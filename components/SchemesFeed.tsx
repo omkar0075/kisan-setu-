@@ -58,34 +58,36 @@ const SchemesFeed: React.FC<Props> = ({ text, language }) => {
     <div className="flex flex-col h-full animate-fade-up p-4 md:p-8 md:pt-4 max-w-5xl mx-auto w-full">
 
       {/* Header & Search */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 dark:from-blue-900 dark:to-indigo-950 rounded-[2.5rem] p-8 mb-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none"></div>
+      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 dark:from-blue-900 dark:to-indigo-950 rounded-[2.5rem] p-8 md:p-10 mb-8 text-white shadow-2xl relative overflow-hidden">
+        {/* Abstract Background Decoration */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-2xl pointer-events-none"></div>
 
-        <h2 className="text-3xl font-extrabold mb-2 relative z-10 flex items-center gap-3">
-          <Landmark className="w-8 h-8 text-blue-200" />
+        <h2 className="text-3xl md:text-4xl font-extrabold mb-3 relative z-10 flex items-center gap-3 tracking-tight">
+          <Landmark className="w-9 h-9 text-blue-200" />
           {text.schemesTitle}
         </h2>
-        <p className="text-blue-100 mb-8 max-w-xl relative z-10 font-medium text-lg opacity-90">{text.schemesSubtitle}</p>
+        <p className="text-blue-100 mb-8 max-w-xl relative z-10 font-medium text-lg opacity-90 leading-relaxed">
+          {text.schemesSubtitle}
+        </p>
 
-        <div className="relative z-10 flex flex-col md:flex-row gap-3 max-w-2xl bg-white/20 p-2 rounded-3xl backdrop-blur-md border border-white/30">
-          <div className="relative flex-1">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
-            <input
-              type="text"
-              placeholder={text.locationPlaceholder}
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleFetchSchemes()}
-              className="w-full bg-transparent border-none outline-none text-white placeholder:text-white/60 pl-12 pr-4 py-3 font-semibold"
-            />
-          </div>
+        <div className="relative z-10 flex items-center w-full max-w-3xl bg-white/10 p-2 pl-6 rounded-full backpack-blur-lg border border-white/20 shadow-inner-light transition-all focus-within:bg-white/15 focus-within:border-white/30">
+          <MapPin className="w-6 h-6 text-blue-200 mr-4 shrink-0" />
+          <input
+            type="text"
+            placeholder={text.locationPlaceholder}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleFetchSchemes()}
+            className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-blue-200/60 font-medium text-lg h-12 w-full"
+          />
           <button
             onClick={handleFetchSchemes}
             disabled={loading}
-            className="bg-white text-blue-700 px-8 py-3 rounded-2xl font-bold shadow-md hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+            className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-3.5 rounded-full font-bold shadow-lg transition-all active:scale-95 disabled:opacity-70 flex items-center gap-2 shrink-0 ml-2"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-            {text.fetchSchemes}
+            <span className="hidden sm:inline">{text.fetchSchemes}</span>
           </button>
         </div>
       </div>
@@ -177,6 +179,18 @@ const SchemesFeed: React.FC<Props> = ({ text, language }) => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {!loading && data && data.schemes.length === 0 && (
+        <div className="text-center p-12 bg-white/50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+          <p className="text-xl text-gray-500 dark:text-gray-400">No schemes found for this location.</p>
+          <button
+            onClick={handleFetchSchemes}
+            className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Try searching for 'India' or another region
+          </button>
         </div>
       )}
     </div>

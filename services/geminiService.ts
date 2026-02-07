@@ -155,15 +155,16 @@ export const getGovernmentSchemes = async (location: string, language: LanguageC
   const prompt = `
     Find detailed Government Agricultural Schemes for farmers in ${location || 'India'}.
     
-    You MUST prioritize data from these specific portals:
-    1. kisanportal.org (Central Gateway)
-    2. pmkisan.gov.in (PM-Kisan)
-    3. agricoop.nic.in (Ministry of Agriculture)
-    4. mygov.in (Citizen Engagement)
+    You MUST prioritize data from these specific official portals:
+    1. https://kisanportal.org/
+    2. https://pmkisan.gov.in
+    3. https://agricoop.nic.in
+    4. https://www.mygov.in
+    5. https://doordarshan.gov.in/ddkisan
     
-    Select 10-15 major active and relevant government schemes (e.g., PM-Kisan, KCC, Fasal Bima Yojana, Soil Health Card, PM Fasal Bima Yojana, PM Krishi Sinchayee Yojana, Paramparagat Krishi Vikas Yojana, etc, or local state schemes for ${location}).
-
-    For EACH scheme, generate a simplified explanation.
+    Select 10-15 major active and beneficial government schemes for farmers from these sources.
+    
+    For EACH scheme, generate a explanation in VERY SHORT and EASY language (like you are explaining to a farmer).
     STRICTLY output the response in valid JSON format ONLY.
     Translate all content to ${targetLanguage}.
 
