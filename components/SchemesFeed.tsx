@@ -58,37 +58,39 @@ const SchemesFeed: React.FC<Props> = ({ text, language }) => {
     <div className="flex flex-col h-full animate-fade-up p-4 md:p-8 md:pt-4 max-w-5xl mx-auto w-full">
 
       {/* Header & Search */}
-      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 dark:from-blue-900 dark:to-indigo-950 rounded-[2.5rem] p-8 md:p-10 mb-8 text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-900 dark:to-indigo-950 rounded-[2.5rem] p-8 md:p-12 mb-10 text-white shadow-2xl relative overflow-hidden">
         {/* Abstract Background Decoration */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-2xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/20 rounded-full -ml-20 -mb-20 blur-2xl pointer-events-none"></div>
 
-        <h2 className="text-3xl md:text-4xl font-extrabold mb-3 relative z-10 flex items-center gap-3 tracking-tight">
-          <Landmark className="w-9 h-9 text-blue-200" />
-          {text.schemesTitle}
-        </h2>
-        <p className="text-blue-100 mb-8 max-w-xl relative z-10 font-medium text-lg opacity-90 leading-relaxed">
-          {text.schemesSubtitle}
-        </p>
+        <div className="relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 flex items-center gap-4 tracking-tight">
+            <Landmark className="w-10 h-10 md:w-12 md:h-12 text-blue-200" />
+            {text.schemesTitle}
+          </h2>
+          <p className="text-blue-100 mb-10 max-w-2xl font-medium text-lg md:text-xl opacity-90 leading-relaxed">
+            {text.schemesSubtitle}
+          </p>
 
-        <div className="relative z-10 flex items-center w-full max-w-3xl bg-white/10 p-2 pl-6 rounded-full backpack-blur-lg border border-white/20 shadow-inner-light transition-all focus-within:bg-white/15 focus-within:border-white/30">
-          <MapPin className="w-6 h-6 text-blue-200 mr-4 shrink-0" />
-          <input
-            type="text"
-            placeholder={text.locationPlaceholder}
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleFetchSchemes()}
-            className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-blue-200/60 font-medium text-lg h-12 w-full"
-          />
-          <button
-            onClick={handleFetchSchemes}
-            disabled={loading}
-            className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-3.5 rounded-full font-bold shadow-lg transition-all active:scale-95 disabled:opacity-70 flex items-center gap-2 shrink-0 ml-2"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-            <span className="hidden sm:inline">{text.fetchSchemes}</span>
-          </button>
+          <div className="flex items-center w-full max-w-2xl bg-white p-2 pl-6 rounded-full shadow-xl transition-all hover:shadow-2xl focus-within:ring-4 focus-within:ring-blue-400/30">
+            <MapPin className="w-6 h-6 text-blue-600 mr-4 shrink-0" />
+            <input
+              type="text"
+              placeholder={text.locationPlaceholder}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleFetchSchemes()}
+              className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder:text-gray-400 font-bold text-lg h-12 w-full"
+            />
+            <button
+              onClick={handleFetchSchemes}
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-full font-bold shadow-lg transition-all active:scale-95 disabled:opacity-70 flex items-center gap-2 shrink-0 ml-2"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+              <span className="hidden sm:inline">{text.fetchSchemes}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -104,7 +106,7 @@ const SchemesFeed: React.FC<Props> = ({ text, language }) => {
           {data?.schemes.map((scheme, idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-earth-100 dark:border-slate-700 overflow-hidden transition-all hover:shadow-depth"
+              className="bg-white dark:bg-slate-800 rounded-3xl shadow-card border border-earth-100 dark:border-slate-700 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-blue-300 dark:hover:border-blue-700"
             >
               <div
                 onClick={() => toggleExpand(idx)}

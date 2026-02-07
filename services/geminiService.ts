@@ -162,9 +162,13 @@ export const getGovernmentSchemes = async (location: string, language: LanguageC
     4. https://www.mygov.in
     5. https://doordarshan.gov.in/ddkisan
     
-    Select 10-15 major active and beneficial government schemes for farmers from these sources.
+    Select 20-25 major active and beneficial government schemes for farmers from these sources.
     
-    For EACH scheme, generate a explanation in VERY SHORT and EASY language (like you are explaining to a farmer).
+    For EACH scheme, generate:
+    1. A detailed explanation (approx 5 lines) in simple, easy-to-understand language.
+    2. At least 5 specific benefits (bullet points).
+    3. Detailed, step-by-step application process (as many steps as needed to be clear).
+    
     STRICTLY output the response in valid JSON format ONLY.
     Translate all content to ${targetLanguage}.
 
@@ -173,9 +177,9 @@ export const getGovernmentSchemes = async (location: string, language: LanguageC
       "schemes": [
         {
           "name": "Scheme Name",
-          "description": "Simple 1-sentence explanation of what it is.",
-          "benefits": ["Benefit 1", "Benefit 2"],
-          "stepsToClaim": ["Step 1", "Step 2", "Step 3"],
+          "description": "Detailed 5-line explanation of the scheme...",
+          "benefits": ["Benefit 1", "Benefit 2", "Benefit 3", "Benefit 4", "Benefit 5"],
+          "stepsToClaim": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"],
           "officialLink": "Official URL from the grounding sources"
         }
       ]
