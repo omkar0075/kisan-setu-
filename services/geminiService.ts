@@ -19,27 +19,185 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
   });
 };
 
+const ALLORIGINS = process.env.NEWS_PROXY_URL || 'https://api.allorigins.win/raw?url=';
+
+export const fetchPibPressReleases = async (location?: string): Promise<{ title: string; link: string }[]> => {
+  try {
+    // Target Ministry of Agriculture specifically if possible, but main page is safer for generic scraping
+    const url = 'https://pib.gov.in/AllRelease.aspx';
+    const res = await fetch(`${ALLORIGINS}${encodeURIComponent(url)}`);
+    const html = await res.text();
+
+    // Regex to capture standard PIB press release links clearly
+    // Adjusted to be more flexible with quotes and whitespace
+    const regex = /href=['"](https:\/\/pib\.gov\.in\/PressRelease(?:Page|Detail)\.aspx\?PRID=\d+)['"][^>]*>([^<]+?)<\/a>/gi;
+    const items: { title: string; link: string }[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(html)) !== null) {
+      const link = m[1];
+      const title = m[2].replace(/<[^>]+>/g, '').trim();
+      if (title && link) items.push({ title, link });
+      if (items.length >= 15) break;
+    }
+
+    // Also fallback to relative paths if absolute not found
+    if (items.length === 0) {
+      const relativeRegex = /href=['"](\/PressRelease(?:Page|Detail)\.aspx\?PRID=\d+)['"][^>]*>([^<]+?)<\/a>/gi;
+      while ((m = relativeRegex.exec(html)) !== null) {
+        const link = "https://pib.gov.in" + m[1];
+        const title = m[2].replace(/<[^>]+>/g, '').trim();
+        if (title && link) items.push({ title, link });
+        if (items.length >= 15) break;
+      }
+    }
+
+    return items;
+  } catch (error) {
+    console.warn('Failed to fetch PIB press releases:', error);
+    return [];
+  }
+};
+
+export const fetchTimesOfIndia = async (section?: string): Promise<{ title: string; link: string }[]> => {
+  try {
+    const url = 'https://timesofindia.indiatimes.com/topic/agriculture';
+    const res = await fetch(`${ALLORIGINS}${encodeURIComponent(url)}`);
+    const html = await res.text();
+
+    const regex = /href\s*=\s*"(?:https?:\/\/timesofindia\.indiatimes\.com)?(\/articleshow\/\d+[^\"]*\.cms)"[^>]*>([^<]+?)<\/a>/gi;
+    const items: { title: string; link: string }[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(html)) !== null) {
+      const rel = m[1];
+      const title = m[2].replace(/<[^>]+>/g, '').trim();
+      const link = new URL(rel, 'https://timesofindia.indiatimes.com').toString();
+      if (title && link) items.push({ title, link });
+      if (items.length >= 10) break;
+    }
+
+    return items;
+  } catch (error) {
+    console.warn('Failed to fetch Times of India articles:', error);
+    return [];
+  }
+};
+
+// Helper: fetch HTML via AllOrigins proxy
+const fetchHtml = async (url: string): Promise<string | null> => {
+  try {
+    const res = await fetch(`${ALLORIGINS}${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    return await res.text();
+  } catch (err) {
+    console.warn('fetchHtml failed for', url, err);
+    return null;
+  }
+};
+
+const extractTitleAndSnippet = (html: string): { title: string; snippet: string } => {
+  const metaOgTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["'][^>]*>/i);
+  const metaTitle = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i);
+  const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["'][^>]*>/i);
+
+  const title = (metaOgTitle && metaOgTitle[1]) || (metaTitle && metaTitle[1]) || 'Untitled';
+  const snippet = (metaDesc && metaDesc[1]) || (ogDesc && ogDesc[1]) || (() => {
+    const p = html.match(/<p[^>]*>([^<]{40,}?)<\/p>/i);
+    return p ? p[1].replace(/\s+/g, ' ').trim() : '';
+  })();
+
+  return { title: title.trim(), snippet: snippet ? snippet.trim() : title.trim() };
+};
+
+const fetchAndSummarizeFromOfficialLinks = async (location: string, language: LanguageCode): Promise<NewsResponse | null> => {
+  const links = [
+    { url: 'https://agricoop.nic.in', source: 'Ministry of Agriculture' },
+    { url: 'https://pib.gov.in', source: 'PIB' },
+    { url: 'https://pmkisan.gov.in', source: 'PM-Kisan' },
+    { url: 'https://apeda.gov.in', source: 'APEDA' },
+    { url: 'https://enam.gov.in', source: 'eNAM' },
+    { url: 'https://icar.org.in', source: 'ICAR' },
+    { url: 'https://timesofindia.indiatimes.com/topic/agriculture', source: 'Times of India' }
+  ];
+
+  const collected: { title: string; snippet: string; link: string; source: string; suggestedCategory?: string }[] = [];
+
+  for (const l of links) {
+    const html = await fetchHtml(l.url);
+    if (!html) continue;
+    const { title, snippet } = extractTitleAndSnippet(html);
+
+    // Improved category guessing
+    let suggestedCategory = 'Crops';
+    if (/market|mandi|price|trade|export/i.test(snippet + title)) suggestedCategory = 'Market';
+    else if (/weather|rain|monsoon|storm|flood/i.test(snippet + title)) suggestedCategory = 'Weather';
+    else if (/tech|drone|app|digital|ai|satellite/i.test(snippet + title)) suggestedCategory = 'Technology';
+    else if (/accident|fire|damage|loss|death/i.test(snippet + title)) suggestedCategory = 'Accidents';
+
+    collected.push({ title, snippet, link: l.url, source: l.source, suggestedCategory });
+    if (collected.length >= 10) break;
+  }
+
+  if (!collected.length) return null;
+
+  const languageNames: Record<LanguageCode, string> = { en: 'English', hi: 'Hindi', mr: 'Marathi', ur: 'Urdu', kn: 'Kannada', te: 'Telugu' };
+  const targetLanguage = languageNames[language] || 'English';
+
+  const itemsForPrompt = collected.map((c, i) => `ITEM_${i + 1}\nSource: ${c.source}\nLink: ${c.link}\nTitle: ${c.title}\nSnippet: ${c.snippet}\nSuggestedCategory: ${c.suggestedCategory}`).join('\n\n');
+
+  const prompt = `You are a news editor. Generate a JSON object with key "news". 
+  For each item below, write a news summary (7-8 short sentences) in ${targetLanguage}.
+  
+  Prioritize:
+  1. Weather for ${location || 'India'}
+  2. Agricultural Accidents
+  3. Market/crops info
+
+  ${itemsForPrompt}
+
+  Output JSON format: { "news": [{ "category": "Weather|Accidents|Technology|Crops|Market", "title": "...", "summary": "...", "date": "...", "source": "...", "link": "..." }] }`;
+
+  try {
+    const resp = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: prompt,
+      config: { responseMimeType: 'application/json' }
+    });
+
+    const text = resp.text;
+    if (!text) return null;
+    const parsed = JSON.parse(text);
+    const sources = collected.map(c => ({ title: c.title, uri: c.link }));
+    return { news: parsed.news || [], sources } as NewsResponse;
+  } catch (err) {
+    console.warn('AI summarization of official links failed', err);
+    return null;
+  }
+};
+
+
 export const createAgriChatSession = (language: string, history: Content[] = []): Chat => {
   return ai.chats.create({
     model: "gemini-1.5-flash",
     config: {
-      systemInstruction: `You are Kisan Setu, a highly knowledgeable and friendly agricultural expert. 
-      Your goal is to assist farmers with questions regarding:
-      - Weather forecasting and its impact on farming.
-      - Soil health, types, and maintenance.
-      - Fertilizers (organic and chemical).
-      - Crop selection, rotation, and management.
-      - Plant diseases and remedies.
-      
-      Rules:
+      systemInstruction: `You are Kisan Setu, a highly knowledgeable agricultural expert and government scheme advisor. 
+      Your goal is to assist farmers with questions regarding farming, schemes, weather, and department info.
+
+      **KEY KNOWLEDGE BASE (Use this for queries about Ministries & Schemes):**
+      1. **Ministry of Agriculture & Farmers Welfare**: Main official body. Website: https://agricoop.nic.in
+      2. **PM-Kisan Samman Nidhi**: Direct income support (₹6000/year). Official Portal: https://pmkisan.gov.in
+      3. **Pradhan Mantri Fasal Bima Yojana (PMFBY)**: Crop insurance. Portal: https://pmfby.gov.in
+      4. **e-NAM (National Agriculture Market)**: Online trading for better prices. Portal: https://enam.gov.in
+      5. **APEDA Farmer Connect**: Export promotion and links to state agriculture departments. Website: https://apeda.gov.in
+      6. **Kisan Call Center**: Toll-free number 1800-180-1551.
+      7. **Soil Health Card**: https://soilhealth.dac.gov.in
+
+      **Rules:**
       1. STRICTLY answer in the user's requested language (${language}).
-      2. Keep answers simple, practical, and easy for a farmer to understand. Avoid overly complex jargon.
-      3. Be encouraging and helpful.
-      4. If a question is not related to farming/agriculture, politely guide the user back to farming topics.
-      5. FORMATTING RULES: 
-         - **Do not use long paragraphs.** Break text into small, digestible chunks (2-3 sentences max).
-         - **Use Bullet Points** or numbered lists heavily to list steps, tips, or items.
-         - Use **Bold** text for important keywords.`,
+      2. Keep answers simple, practical, and friendly.
+      3. **IF asked about schemes or ministries, ALWAYS provide the exact official website link from the list above.**
+      4. FORMATTING: Use Bullet points, Bold text for keywords, and short paragraphs.
+      `,
       temperature: 0.7,
     },
     history: history
@@ -53,41 +211,50 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
   const targetLanguage = languageNames[language];
   const currentDate = new Date().toDateString();
 
+  // Fetch recent PIB press releases
+  const pibItems = await fetchPibPressReleases(location);
+  const pibSummary = pibItems.length ? pibItems.map(p => `- ${p.title} (${p.link})`).join('\n') : '';
+
+  // Fetch recent Times of India agriculture articles
+  const timesItems = await fetchTimesOfIndia(location);
+  const timesSummary = timesItems.length ? timesItems.map(t => `- ${t.title} (${t.link})`).join('\n') : '';
+
+  // Attempt direct summarization if we have good source hits, otherwise fall through to generative
+  // (We'll skip the exclusive direct return here to ensure we get a nice mix including the generative prompt if needed, 
+  // or we can mix them. For now, let's trust the Generative Model to synthesize the scraped data.)
+
   const prompt = `
     Find the latest agricultural news and updates for farmers in ${location || 'India'}. 
     Today is ${currentDate}.
-    Generate at least 8-10 diverse news items across the requested categories.
     
-    You MUST search and prioritize data from these specific official sources:
-    1. agricoop.nic.in (Govt Schemes)
-    2. icar.org.in (Research & Tech)
-    3. kisanportal.org (General Advisories)
-    4. doordarshan.gov.in/ddkisan (News)
-    5. agmarknet.gov.in (Market Prices)
-    6. krishakjagat.org (Latest Agri News)
-    7. tractorguru.in/news (Machinery & Tech)
+    **CRITICAL REQUIREMENT:**
+    You must fetch and generate valid news items for specific categories.
+    
+    **SOURCES TO USE:**
+    1. **PIB (Press Information Bureau)**: ${pibSummary ? 'Use these fetched items: ' + pibSummary : 'Search pib.gov.in for agriculture releases.'}
+    2. **Times of India/Local News**: ${timesSummary ? 'Use these fetched items: ' + timesSummary : 'Search reliable news sources.'}
+    3. Ministry of Agriculture (agricoop.nic.in)
+    4. IMD (Weather)
 
-    Categorize the news into exactly these 5 categories:
-    1. **Weather**: Rain alerts, temperature, monsoon updates.
-    2. **Accidents**: Farming related accidents, safety warnings, fire incidents in fields.
-    3. **Technology**: New machinery, drones, app launches, scientific breakthroughs.
-    4. **Crops**: Sowing/harvesting updates, fertilizers, disease outbreaks.
-    5. **Market**: Mandi prices, MSP updates, export/import news.
+    **CATEGORIES TO GENERATE (Must have 1-2 items per category if possible):**
+    1. **Weather**: [CRITICAL] Forecast for ${location}. Rain, storm, or heat alerts.
+    2. **Accidents**: Any recent farming-related accidents (fire, machinery, animal attacks) in the region/state. If none, general safety warnings.
+    3. **Technology**: New farm machines, apps, drones, or solar pumps.
+    4. **Crops**: Sowing advice, pest alerts, harvest news.
+    5. **Market**: Price trends (Mandi rates) for local crops.
 
-    STRICTLY output the response in valid JSON format ONLY. 
-    The JSON should be a list of objects under the key "news".
-    Translate all content to ${targetLanguage}.
-
+    STRICTLY output JSON. Translate values to ${targetLanguage}.
+    
     JSON Structure:
     {
       "news": [
         {
           "category": "Weather" | "Accidents" | "Technology" | "Crops" | "Market",
-          "title": "Short Headline (Newspaper style)",
-          "summary": "2-3 sentence summary.",
-          "date": "Date of news (e.g. 2 hours ago, or DD MMM)",
-          "source": "Name of the website/source",
-          "link": "URL to the article if found"
+          "title": "Headline",
+          "summary": "7-8 sentence detailed news summary.",
+          "date": "Date/Time",
+          "source": "Source Name", // e.g. "PIB", "Times of India", "IMD"
+          "link": "URL"
         }
       ]
     }
@@ -108,20 +275,18 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
 
     const parsedData = JSON.parse(responseText);
 
-    // Extract grounding chunks for sources
+    // Build source list
     const sources: { title: string; uri: string }[] = [];
-
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-    if (chunks) {
-      chunks.forEach((chunk: any) => {
-        if (chunk.web) {
-          sources.push({ title: chunk.web.title, uri: chunk.web.uri });
-        }
+    if (parsedData.news) {
+      parsedData.news.forEach((n: any) => {
+        if (n.link && n.source) sources.push({ title: n.source, uri: n.link });
       });
     }
+    // Add scraped sources if they were used
+    if (pibItems) pibItems.forEach(p => sources.push({ title: "PIB: " + p.title, uri: p.link }));
+    if (timesItems) timesItems.forEach(t => sources.push({ title: "ToI: " + t.title, uri: t.link }));
 
-    // Deduplicate sources
-    const uniqueSources = sources.filter((v, i, a) => a.findIndex(v2 => (v2.uri === v.uri)) === i).slice(0, 5);
+    const uniqueSources = sources.filter((v, i, a) => a.findIndex(v2 => (v2.uri === v.uri)) === i).slice(0, 10);
 
     return {
       news: parsedData.news || [],
@@ -130,15 +295,17 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
 
   } catch (error) {
     console.error("Error fetching news:", error);
-    // Fallback data structure in case of error
+
+    // Fallback: If AI fails, return some static or scraped data formatted as news
     return {
       news: [
         {
-          category: 'Crops',
-          title: 'News Service Unavailable',
-          summary: 'We are currently unable to fetch the latest updates from the requested sources. Please check your internet connection.',
-          date: new Date().toLocaleDateString(),
-          source: 'System'
+          category: 'Weather',
+          title: 'Weather Update Service Unavailable',
+          summary: 'We could not fetch the live weather at this moment. Please check local TV or Radio.',
+          date: currentDate,
+          source: 'System',
+          link: ''
         }
       ],
       sources: []

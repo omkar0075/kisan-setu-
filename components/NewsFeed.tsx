@@ -114,7 +114,8 @@ const NewsFeed: React.FC<Props> = ({ text, language }) => {
       </p>
 
       {item.source && (
-        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+        <div className={`mt-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${/PIB|Ministry|Govt|Government/i.test(item.source) ? 'text-red-700 bg-red-50 px-2 py-1 rounded w-fit border border-red-100' : 'text-gray-500'
+          }`}>
           <Globe className="w-3 h-3" /> {item.source}
           {item.link && (
             <a href={item.link} target="_blank" rel="noopener noreferrer" className="ml-auto text-blue-600 hover:underline flex items-center gap-1">
