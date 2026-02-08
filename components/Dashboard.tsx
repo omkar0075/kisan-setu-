@@ -180,92 +180,92 @@ const Dashboard: React.FC<Props> = ({
                 </div>
 
 
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/** Feature: Instant Soil Analysis */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-leaf-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-leaf-600 dark:text-leaf-400">
-                      <Zap className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-leaf-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-leaf-600 dark:text-leaf-400">
+                      <Zap className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.feature1}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.feature1Desc}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.feature1}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.feature1Desc}</p>
                     </div>
                   </div>
 
                   {/** Feature: Fertilizer Plans */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      <Leaf className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-blue-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <Leaf className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.feature2}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.feature2Desc}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.feature2}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.feature2Desc}</p>
                     </div>
                   </div>
 
                   {/** Feature: 24/7 Agri-Chat */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-teal-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-teal-600 dark:text-teal-400">
-                      <MessagesSquare className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700 md:col-span-2 lg:col-span-1">
+                    <div className="w-16 h-16 mb-4 bg-teal-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400">
+                      <MessagesSquare className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.feature3}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.feature3Desc}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.feature3}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.feature3Desc}</p>
                     </div>
                   </div>
 
                   {/** Feature: Agri News */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-orange-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-orange-600">
-                      <Newspaper className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-orange-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-orange-600">
+                      <Newspaper className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.newsTitle}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.newsSubtitle}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.newsTitle}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.newsSubtitle}</p>
                     </div>
                   </div>
 
                   {/** Feature: Government Schemes */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-violet-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-violet-600">
-                      <Landmark className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-violet-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-violet-600">
+                      <Landmark className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.schemesTitle}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.schemesSubtitle}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.schemesTitle}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.schemesSubtitle}</p>
                     </div>
                   </div>
 
                   {/** Feature: Upload Soil Report */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-emerald-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-emerald-600">
-                      <UploadCloud className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-emerald-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-emerald-600">
+                      <UploadCloud className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.uploadReport}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.dragDrop}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.uploadReport}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.dragDrop}</p>
                     </div>
                   </div>
 
                   {/** Feature: Nearby Labs */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-leaf-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-leaf-600">
-                      <MapPin className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700">
+                    <div className="w-16 h-16 mb-4 bg-leaf-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-leaf-600">
+                      <MapPin className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.nearbyLabsTitle}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.nearbyLabsSubtitle}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.nearbyLabsTitle}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.nearbyLabsSubtitle}</p>
                     </div>
                   </div>
 
                   {/** Feature: Soil Testing Guide */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-50 dark:bg-slate-800 rounded-lg flex items-center justify-center text-blue-600">
-                      <CloudSun className="w-6 h-6" />
+                  <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-earth-100 dark:border-slate-700 md:col-span-2 lg:col-span-1">
+                    <div className="w-16 h-16 mb-4 bg-blue-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-blue-600">
+                      <CloudSun className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-lg text-earth-900 dark:text-white">{text.guideTitle}</h4>
-                      <p className="text-earth-600 dark:text-slate-400">{text.guideSubtitle}</p>
+                      <h4 className="font-bold text-xl text-earth-900 dark:text-white mb-2">{text.guideTitle}</h4>
+                      <p className="text-earth-600 dark:text-slate-400 leading-relaxed">{text.guideSubtitle}</p>
                     </div>
                   </div>
                 </div>
