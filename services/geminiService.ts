@@ -730,18 +730,65 @@ export const analyzeSoilReport = async (
       throw new Error("Empty response from model");
     }
 
-    // Clean up potential markdown code blocks
-    const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/\[\s*\{[\s\S]*\}\s*\]/) || responseText.match(/\{[\s\S]*\}/); // Also match plain objects
+    // Advanced JSON Cleanup Strategy
+    let jsonStr = responseText;
 
-    if (jsonMatch) {
-      const jsonStr = (jsonMatch[1] || jsonMatch[0]).trim();
-      return JSON.parse(jsonStr) as AnalysisResponse;
+    // 1. Try extracting code block content
+    const codeBlockMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1];
     }
 
-    return JSON.parse(responseText) as AnalysisResponse;
+    // 2. If no code block, try finding the first '{' and the last '}'
+    else {
+      const firstCurly = responseText.indexOf('{');
+      const lastCurly = responseText.lastIndexOf('}');
+      if (firstCurly !== -1 && lastCurly !== -1 && lastCurly > firstCurly) {
+        jsonStr = responseText.substring(firstCurly, lastCurly + 1);
+      }
+    }
+
+    // 3. Cleanup common markdown artifacts
+    jsonStr = jsonStr.trim().replace(/^`+|`+$/g, '');
+
+    try {
+      return JSON.parse(jsonStr) as AnalysisResponse;
+    } catch (parseError) {
+      console.error("JSON Parsing failed for text:", responseText);
+      console.error("Attempted to parse:", jsonStr);
+
+      // FALLBACK: Return a basic valid structure if AI JSON is completely broken
+      // This ensures the UI doesn't crash and user sees SOMETHING
+      return {
+        extracted_location: "Unknown Location",
+        narrative: {
+          soil_condition_summary: "The analysis provided partial data or was unreadable. Please try uploading a clearer image. However, based on general observations, soil health maintenance is key.",
+          weather_location_analysis: "Weather data could not be determined from the report.",
+          soil_maintenance: ["Ensure regular organic matter addition.", "Monitor pH levels annually."],
+          production_increase_tips: ["Use balanced fertilizers.", "Crop rotation is recommended."],
+          fertilizer_recommendations: {
+            chemical: ["Standard NPK (check local dealer)"],
+            organic: ["Vermicompost", "Cow Dung Manure"]
+          },
+          irrigation_requirements: "Maintain adequate moisture based on crop type.",
+          crop_suggestions: [{ crop: "Local Staple Crop", reasoning: "Suitable for general soil types." }],
+          disease_prediction: []
+        },
+        raw_data: {
+          ph: { name: "pH", value: "Review", unit: "", status: "Unknown", effect: "", recommendation: "" },
+          ec: { name: "EC", value: "Review", unit: "dS/m", status: "Unknown", effect: "", recommendation: "" },
+          oc: { name: "OC", value: "Review", unit: "%", status: "Unknown", effect: "", recommendation: "" },
+          nitrogen: { name: "Nitrogen", value: "Review", unit: "kg/ha", status: "Unknown", effect: "", recommendation: "" },
+          phosphorus: { name: "Phosphorus", value: "Review", unit: "kg/ha", status: "Unknown", effect: "", recommendation: "" },
+          potassium: { name: "Potassium", value: "Review", unit: "kg/ha", status: "Unknown", effect: "", recommendation: "" },
+          secondary: [],
+          micronutrients: []
+        }
+      };
+    }
 
   } catch (error) {
     console.error("Error analyzing soil report:", error);
-    throw new Error("Failed to analyze report. Please try again.");
+    throw new Error("Failed to analyze report. Please try a clearer image.");
   }
 };
