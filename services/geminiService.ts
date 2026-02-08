@@ -722,10 +722,7 @@ export const analyzeSoilReport = async (
             { text: prompt }
           ]
         }
-      ],
-      config: {
-        responseMimeType: "application/json"
-      }
+      ]
     });
 
     const responseText = response.text;
