@@ -487,23 +487,29 @@ export const findNearbyPlaces = async (
     : `${location.lat}, ${location.lng}`;
 
   const prompt = `
-    Find "Soil Testing Labs" and "Government Krushi Seva Kendra" near ${locationQuery}.
-    I need real, existing places found via Google Search.
+    Perform a Google Search to find "Soil Testing Laboratories" and "Agriculture Service Centers (Krushi Seva Kendra)" strictly within or very near to: ${locationQuery}.
     
-    Return a list of the 8 closest places found.
-    For each place, identify if it is a 'Lab' or 'Krushi Kendra' based on its name or description.
+    I need REAL, SPECIFIC existing places with their ACTUAL addresses. 
+    Do NOT generate generic placeholders like "Market Yard, ${locationQuery}". 
+    Find the specific shop/lab name and its real street address.
+
+    Return a list of the top 6 most relevant results.
     
+    Strictly categorize each as:
+    - 'Lab': ONLY for Soil/Water Testing Labs, Agriculture University Labs, KVK Labs.
+    - 'Krushi Kendra': For Agro Service Centers, Fertilizer/Seed Shops, Farm Supply Stores.
+
     STRICTLY return the response as a JSON array of objects. 
-    Translate relevant names/addresses to ${targetLanguage} ONLY if they are not proper nouns, otherwise keep original.
+    Translate relevant descriptions to ${targetLanguage} if needed, but keep Names and Addresses in their original form to ensure they can be located.
     
     JSON Format:
     [
       {
-        "name": "Name of place",
-        "address": "Address or approximate location",
+        "name": "Exact Name of the Place",
+        "address": "Full Real Address (Building, Street, Area)",
         "type": "Lab" | "Krushi Kendra",
-        "rating": "4.5" (if available, else empty),
-        "distance": "2.5 km" (approximate)
+        "rating": "4.5" (if available, else null),
+        "distance": "Distance from center" (estimated)
       }
     ]
   `;
@@ -522,6 +528,7 @@ export const findNearbyPlaces = async (
     // ... (inside findNearbyPlaces)
 
     const text = response.text || "";
+    // Clean up potential markdown code blocks
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/\[\s*\{[\s\S]*\}\s*\]/);
 
     let results: LabItem[] = [];
