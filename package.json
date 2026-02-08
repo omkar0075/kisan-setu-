@@ -11,20 +11,20 @@
     "dev:all": "concurrently \"npm:start:server\" \"npm:dev\""
   },
   "dependencies": {
+    "@google/genai": "^1.39.0",
     "axios": "^1.5.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "firebase": "^12.9.0",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "@google/genai": "^1.39.0",
-    "lucide-react": "^0.563.0",
-    "react-markdown": "^10.1.0",
-    "firebase": "^12.9.0"
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^8.2.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
