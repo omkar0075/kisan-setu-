@@ -732,6 +732,15 @@ export const analyzeSoilReport = async (
     if (!responseText) {
       throw new Error("Empty response from model");
     }
+
+    // Clean up potential markdown code blocks
+    const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/\[\s*\{[\s\S]*\}\s*\]/) || responseText.match(/\{[\s\S]*\}/); // Also match plain objects
+
+    if (jsonMatch) {
+      const jsonStr = (jsonMatch[1] || jsonMatch[0]).trim();
+      return JSON.parse(jsonStr) as AnalysisResponse;
+    }
+
     return JSON.parse(responseText) as AnalysisResponse;
 
   } catch (error) {

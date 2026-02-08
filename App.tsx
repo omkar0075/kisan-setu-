@@ -26,7 +26,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
-  
+
   // Dashboard view state
   const [dashboardView, setDashboardView] = useState<'home' | 'upload' | 'chat' | 'news' | 'schemes' | 'soil_guide' | 'nearby_labs'>('home');
 
@@ -85,7 +85,7 @@ function App() {
     setScreen(AppScreen.DASHBOARD);
     setDashboardView('home');
   };
-  
+
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -101,8 +101,17 @@ function App() {
     setLoading(true);
     try {
       const base64Data = await fileToGenerativePart(file);
-      // Pass the actual MIME type of the file
-      const result = await analyzeSoilReport(base64Data, file.type, language);
+
+      // Infer MIME type if missing or generic
+      let mimeType = file.type;
+      if (!mimeType || mimeType === "") {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (ext === 'pdf') mimeType = 'application/pdf';
+        else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+        else if (ext === 'png') mimeType = 'image/png';
+      }
+
+      const result = await analyzeSoilReport(base64Data, mimeType, language);
       setAnalysisResult(result);
       // Move from Dashboard Upload view to Full Analysis Screen
       setScreen(AppScreen.ANALYSIS);
@@ -132,101 +141,101 @@ function App() {
 
       case AppScreen.LANGUAGE_SELECT:
         return <LanguageSelection onSelect={handleLanguageSelect} />;
-      
+
       case AppScreen.LOGIN:
         return (
-          <Login 
-            text={text} 
-            onLogin={handleLogin} 
-            onBack={() => setScreen(AppScreen.LANGUAGE_SELECT)} 
+          <Login
+            text={text}
+            onLogin={handleLogin}
+            onBack={() => setScreen(AppScreen.LANGUAGE_SELECT)}
           />
         );
-      
+
       case AppScreen.DASHBOARD:
         return (
-          <Dashboard 
-             text={text} 
-             onNavigate={handleDashboardNavigate} 
-             onLogout={handleLogout}
-             activeView={(dashboardView === 'soil_guide' || dashboardView === 'nearby_labs') ? 'upload' : dashboardView} 
-             isDarkMode={darkMode}
-             toggleTheme={toggleTheme}
+          <Dashboard
+            text={text}
+            onNavigate={handleDashboardNavigate}
+            onLogout={handleLogout}
+            activeView={(dashboardView === 'soil_guide' || dashboardView === 'nearby_labs') ? 'upload' : dashboardView}
+            isDarkMode={darkMode}
+            toggleTheme={toggleTheme}
           >
-             {/* Render Sub-Views inside Dashboard Layout */}
-             {dashboardView === 'upload' && (
-                <ReportUpload 
-                  text={text} 
-                  onUpload={handleFileUpload} 
-                  isLoading={loading}
-                  onGuide={() => setDashboardView('soil_guide')}
-                />
-             )}
-             
-             {dashboardView === 'soil_guide' && (
-                <SoilTestingGuide 
-                   text={text}
-                   onBack={() => setDashboardView('upload')}
-                   onFindLabs={() => setDashboardView('nearby_labs')}
-                />
-             )}
+            {/* Render Sub-Views inside Dashboard Layout */}
+            {dashboardView === 'upload' && (
+              <ReportUpload
+                text={text}
+                onUpload={handleFileUpload}
+                isLoading={loading}
+                onGuide={() => setDashboardView('soil_guide')}
+              />
+            )}
 
-             {dashboardView === 'nearby_labs' && (
-                <NearbyLabs
-                   text={text}
-                   language={language}
-                   onBack={() => setDashboardView('soil_guide')}
-                />
-             )}
-             
-             {dashboardView === 'chat' && (
-                <ChatInterface 
-                  text={text} 
-                  language={language}
-                  onBack={() => setDashboardView('home')}
-                  userId={user?.uid}
-                />
-             )}
+            {dashboardView === 'soil_guide' && (
+              <SoilTestingGuide
+                text={text}
+                onBack={() => setDashboardView('upload')}
+                onFindLabs={() => setDashboardView('nearby_labs')}
+              />
+            )}
 
-             {dashboardView === 'news' && (
-                <NewsFeed
-                  text={text}
-                  language={language}
-                />
-             )}
+            {dashboardView === 'nearby_labs' && (
+              <NearbyLabs
+                text={text}
+                language={language}
+                onBack={() => setDashboardView('soil_guide')}
+              />
+            )}
 
-             {dashboardView === 'schemes' && (
-                <SchemesFeed
-                  text={text}
-                  language={language}
-                />
-             )}
-             
-             {dashboardView === 'home' && (
-               <div className="h-full"></div>
-             )}
+            {dashboardView === 'chat' && (
+              <ChatInterface
+                text={text}
+                language={language}
+                onBack={() => setDashboardView('home')}
+                userId={user?.uid}
+              />
+            )}
+
+            {dashboardView === 'news' && (
+              <NewsFeed
+                text={text}
+                language={language}
+              />
+            )}
+
+            {dashboardView === 'schemes' && (
+              <SchemesFeed
+                text={text}
+                language={language}
+              />
+            )}
+
+            {dashboardView === 'home' && (
+              <div className="h-full"></div>
+            )}
           </Dashboard>
         );
-      
+
       case AppScreen.ANALYSIS:
         if (!analysisResult) return null;
         return (
-          <AnalysisResult 
-            text={text} 
-            data={analysisResult} 
-            onRetry={handleRetry} 
+          <AnalysisResult
+            text={text}
+            data={analysisResult}
+            onRetry={handleRetry}
           />
         );
-      
+
       case AppScreen.CHAT:
         return (
-          <ChatInterface 
-            text={text} 
+          <ChatInterface
+            text={text}
             language={language}
             onBack={() => setScreen(AppScreen.DASHBOARD)}
             userId={user?.uid}
           />
         );
-        
+
       default:
         return <div className="p-4 text-center">Error: Unknown Screen</div>;
     }
@@ -236,13 +245,13 @@ function App() {
     <div className="relative min-h-screen transition-colors duration-500 overflow-x-hidden">
       {/* Global Theme Toggle - Hidden on Splash and Dashboard (moved inside Dashboard) */}
       {screen !== AppScreen.SPLASH && screen !== AppScreen.DASHBOARD && (
-        <button 
+        <button
           onClick={toggleTheme}
           className="fixed bottom-4 left-4 z-50 p-3 rounded-full shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-earth-200 dark:border-slate-700 text-earth-600 dark:text-yellow-400 hover:scale-110 active:scale-95 transition-all duration-300 group print:hidden"
           aria-label="Toggle Dark Mode"
         >
           <div className="group-hover:rotate-45 transition-transform duration-500">
-             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </div>
         </button>
       )}
