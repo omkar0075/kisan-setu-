@@ -481,56 +481,59 @@ export const findNearbyPlaces = async (
   };
   const targetLanguage = languageNames[language];
 
-  const locationContext = typeof location === 'string'
-    ? `near ${location}`
-    : `near coordinates ${location.lat}, ${location.lng}`;
+  // Construct a location string for the search query
+  const locationQuery = typeof location === 'string'
+    ? location
+    : `${location.lat}, ${location.lng}`;
 
-  // If we have strict coordinates, we use retrievalConfig, otherwise we rely on the prompt context
-  const toolConfig = typeof location !== 'string' ? {
-    retrievalConfig: {
-      latLng: {
-        latitude: location.lat,
-        longitude: location.lng
+  const prompt = `
+    Find "Soil Testing Labs" and "Government Krushi Seva Kendra" near ${locationQuery}.
+    I need real, existing places found via Google Search.
+    
+    Return a list of the 8 closest places found.
+    For each place, identify if it is a 'Lab' or 'Krushi Kendra' based on its name or description.
+    
+    STRICTLY return the response as a JSON array of objects. 
+    Translate relevant names/addresses to ${targetLanguage} ONLY if they are not proper nouns, otherwise keep original.
+    
+    JSON Format:
+    [
+      {
+        "name": "Name of place",
+        "address": "Address or approximate location",
+        "type": "Lab" | "Krushi Kendra",
+        "rating": "4.5" (if available, else empty),
+        "distance": "2.5 km" (approximate)
       }
-    }
-  } : undefined;
+    ]
+  `;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-1.5-flash",
-      contents: `Find "Soil Testing Labs" and "Government Krushi Seva Kendra" ${locationContext}.
-      
-      Return a list of the 6-8 closest places found.
-      For each place, identify if it is a 'Lab' or 'Krushi Kendra'.
-      
-      STRICTLY return the response as a JSON array of objects. 
-      Translate relevant text to ${targetLanguage}.
-      
-      JSON Format:
-      [
-        {
-          "name": "Name of place",
-          "address": "Address or approximate location",
-          "type": "Lab" | "Krushi Kendra",
-          "rating": "4.5" (if available, else empty),
-          "distance": "2.5 km" (approximate)
-        }
-      ]`,
+      contents: prompt,
       config: {
-        tools: [{ googleMaps: {} }],
-        toolConfig: toolConfig ? toolConfig : undefined,
+        // Use googleSearch tool to find real places
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json"
       }
     });
 
     const text = response.text || "";
+    // Clean up potential markdown code blocks
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/\[\s*\{[\s\S]*\}\s*\]/);
 
     if (jsonMatch) {
       const jsonStr = jsonMatch[1] || jsonMatch[0];
       return JSON.parse(jsonStr) as LabItem[];
     } else {
-      console.warn("Could not parse JSON from nearby places response", text);
-      return [];
+      // Fallback: try parsing the raw text if it looks like JSON
+      try {
+        return JSON.parse(text) as LabItem[];
+      } catch (e) {
+        console.warn("Could not parse JSON from nearby places response", text);
+        return [];
+      }
     }
 
   } catch (error) {
