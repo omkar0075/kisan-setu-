@@ -43,17 +43,15 @@ function App() {
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
-      setAuthInitialized(true);
-      
-      // If we are past splash/language and user logs in, go to dashboard
-      // If user logs out, go to login
-      if (authInitialized) {
-        if (currentUser && (screen === AppScreen.LOGIN || screen === AppScreen.LANGUAGE_SELECT)) {
-           setScreen(AppScreen.DASHBOARD);
-        } else if (!currentUser && screen === AppScreen.DASHBOARD) {
-           setScreen(AppScreen.LOGIN);
-        }
+
+      // If a user is present, show dashboard (unless still on splash)
+      if (currentUser) {
+        setScreen(prev => (prev === AppScreen.SPLASH ? prev : AppScreen.DASHBOARD));
+      } else {
+        // If signed out while on dashboard, go to login
+        setScreen(prev => (prev === AppScreen.DASHBOARD ? AppScreen.LOGIN : prev));
       }
+      setAuthInitialized(true);
     });
     return () => unsubscribe();
   }, [authInitialized, screen]);
