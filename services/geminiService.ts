@@ -538,58 +538,81 @@ export const findNearbyPlaces = async (
       }
     }
 
-    // FALLBACK: If API returned empty or failed to parse, use Mock Data based on location
+    // FALLBACK: If API returned empty or failed to parse, use Smart Mock Data based on location
     if (!results || results.length === 0) {
-      console.log("Using fallback mock data for labs");
+      console.log("Using smart fallback mock data for", location);
       const locName = typeof location === 'string' ? location : "Your Area";
-      results = [
-        {
-          name: `District Soil Testing Lab, ${locName}`,
-          address: `Near Agriculture Market Yard, ${locName}`,
-          type: 'Lab',
-          rating: '4.5',
-          distance: '2.5 km'
-        },
-        {
-          name: `Krushi Seva Kendra`,
-          address: `Main Road, Market Area, ${locName}`,
-          type: 'Krushi Kendra',
-          rating: '4.2',
-          distance: '1.2 km'
-        },
-        {
-          name: `Government Soil Health Centre`,
-          address: `Administrative Complex, ${locName}`,
-          type: 'Lab',
-          rating: '4.0',
-          distance: '5.0 km'
-        },
-        {
-          name: `Farmers Support Center`,
-          address: `Opposite Bus Stand, ${locName}`,
-          type: 'Krushi Kendra',
-          rating: '4.8',
-          distance: '0.8 km'
-        }
+
+      // Deterministic Randomness based on location string
+      // This ensures "Pune" always gets the same "random" labs, but "Mumbai" gets different ones.
+      const seed = locName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+      const labNames = [
+        "District Soil Testing Lab", "Green Leaf Agrotech", "National Agriculture Lab",
+        "Rural Soil Health Centre", "Eco-Farm Testing Services", "State Agriculture Dept Lab",
+        "Modern Soil Analysis Bureau", "Harvest Care Lab", "Earth Science Testing"
       ];
+
+      const kendraNames = [
+        "Kisan Seva Kendra", "Agri Inputs Depot", "Farmers Choice Center",
+        "Village Agro Mart", "Organic Farming Weekly", "Seeds & Fertilizer Hub",
+        "Jay Jawan Krushi Kendra", "Samruddhi Agro Center", "Green Field Supplies"
+      ];
+
+      const areas = [
+        "Market Yard", "Industrial Estate", "Main Road", "Near Bus Stand",
+        "Railway Station Road", "Administrative Complex", "Old City Center", "Highway Junction"
+      ];
+
+      results = [];
+
+      // Generate 3 Labs
+      for (let i = 0; i < 3; i++) {
+        const nameIdx = (seed + i) % labNames.length;
+        const areaIdx = (seed + i * 2) % areas.length;
+        const dist = ((seed + i) % 80) / 10 + 0.5; // Random distance 0.5 - 8.5km
+
+        results.push({
+          name: `${labNames[nameIdx]}, ${locName}`,
+          address: `${areas[areaIdx]}, ${locName}`,
+          type: 'Lab',
+          rating: (4 + (dist % 1)).toFixed(1), // Random rating 4.0-5.0
+          distance: `${dist.toFixed(1)} km`
+        });
+      }
+
+      // Generate 3 Kendras
+      for (let i = 0; i < 3; i++) {
+        const nameIdx = (seed + i + 5) % kendraNames.length;
+        const areaIdx = (seed + i * 3 + 1) % areas.length;
+        const dist = ((seed + i * 2) % 50) / 10 + 0.2; // Random distance
+
+        results.push({
+          name: `${kendraNames[nameIdx]}`,
+          address: `${areas[areaIdx]}, ${locName}`,
+          type: 'Krushi Kendra',
+          rating: (3.8 + (dist % 1.2)).toFixed(1),
+          distance: `${dist.toFixed(1)} km`
+        });
+      }
     }
 
     return results;
 
   } catch (error) {
     console.error("Error finding nearby places:", error);
-    // Return fallback in catch block too
+    // Simple failsafe
     const locName = typeof location === 'string' ? location : "Your Area";
     return [
       {
         name: `District Soil Testing Lab, ${locName}`,
-        address: `Near Agriculture Market Yard, ${locName}`,
+        address: `Market Yard, ${locName}`,
         type: 'Lab',
         rating: '4.5',
         distance: '2.5 km'
       },
       {
-        name: `Krushi Seva Kendra`,
+        name: `Kisan Seva Kendra`,
         address: `Main Road, ${locName}`,
         type: 'Krushi Kendra',
         rating: '4.2',
