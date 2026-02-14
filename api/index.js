@@ -5,41 +5,51 @@ import dotenv from 'dotenv';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 // Load env vars
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '../.env.local' });
 dotenv.config(); // Fallback to .env
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: '*' })); // Allow all origins for dev
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
 
 const API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
-  console.warn("WARNING: GEMINI_API_KEY is not set in environment variables!");
+  console.error("CRITICAL ERROR: GEMINI_API_KEY is missing! Check .env.local.");
+} else {
+  console.log(`Gemini API Key Loaded: ${API_KEY.substring(0, 8)}...`);
 }
 
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-  safetySettings: [
-    {
-      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    },
-  ],
-});
+const getModel = () => {
+  return genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    safetySettings: [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+    ],
+  });
+};
+
+const model = getModel();
 
 // News Proxy Endpoint (Existing)
 app.get('/proxy', async (req, res) => {
@@ -110,9 +120,48 @@ app.post('/api/chat', async (req, res) => {
     res.json({ text });
   } catch (error) {
     console.error('Chat API Error:', error);
-    res.status(500).json({ error: error.message });
+    // Log detailed Gemini error if available
+    if (error.response) {
+      console.error('Gemini API Response Error:', JSON.stringify(error.response, null, 2));
+    }
+    res.status(500).json({
+      error: error.message || "Unknown error",
+      details: error.toString()
+    });
   }
 });
+
+// Helper to extract JSON from AI response
+const cleanJson = (text) => {
+  let jsonStr = text;
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch) {
+    jsonStr = codeBlockMatch[1];
+  } else {
+    // Try to find array or object
+    const firstCurly = text.indexOf('{');
+    const firstSquare = text.indexOf('[');
+
+    let startIndex = -1;
+    let endIndex = -1;
+
+    // Determine if it looks like an object or array starts first
+    if (firstCurly !== -1 && (firstSquare === -1 || firstCurly < firstSquare)) {
+      startIndex = firstCurly;
+      endIndex = text.lastIndexOf('}');
+    } else if (firstSquare !== -1) {
+      startIndex = firstSquare;
+      endIndex = text.lastIndexOf(']');
+    }
+
+    if (startIndex !== -1 && endIndex !== -1) {
+      jsonStr = text.substring(startIndex, endIndex + 1);
+    }
+  }
+  return JSON.parse(jsonStr);
+};
+
+// ... (Existing endpoints updated to use cleanJson)
 
 // News Generation Endpoint
 app.post('/api/news', async (req, res) => {
@@ -139,7 +188,7 @@ app.post('/api/news', async (req, res) => {
     4. **Crops**: Sowing advice, pest alerts.
     5. **Market**: Price trends.
 
-    STRICTLY output JSON. Translate values to ${language || 'English'}.
+    STRICTLY output valid JSON string. Translate values to ${language || 'English'}.
     
     JSON Structure:
     {
@@ -162,7 +211,7 @@ app.post('/api/news', async (req, res) => {
     });
 
     const text = result.response.text();
-    const parsed = JSON.parse(text);
+    const parsed = cleanJson(text);
     res.json(parsed);
   } catch (error) {
     console.error('News API Error:', error);
@@ -215,7 +264,7 @@ app.post('/api/schemes', async (req, res) => {
     });
 
     const text = result.response.text();
-    const parsed = JSON.parse(text);
+    const parsed = cleanJson(text);
     res.json(parsed);
   } catch (error) {
     console.error('Schemes API Error:', error);
@@ -231,6 +280,8 @@ app.post('/api/nearby-places', async (req, res) => {
     const prompt = `
     Find "Soil Testing Laboratories" and "Agriculture Service Centers (Krushi Seva Kendra)" near: ${locationQuery}.
     Return a list of top 6 relevant results with real addresses.
+    
+    STRICTLY output a valid JSON array.
     
     JSON Format:
     [
@@ -250,11 +301,8 @@ app.post('/api/nearby-places', async (req, res) => {
     });
 
     const text = result.response.text();
-    // Simple extraction if needed, or rely on responseMimeType
-    const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    const jsonStr = jsonMatch ? jsonMatch[0] : text;
-
-    res.json(JSON.parse(jsonStr));
+    const parsed = cleanJson(text);
+    res.json(parsed);
   } catch (error) {
     console.error('Nearby Places API Error:', error);
     res.status(500).json({ error: error.message });
@@ -270,7 +318,38 @@ app.post('/api/analyze-soil', async (req, res) => {
     Analyze the provided Soil Test Report (Image or PDF).
     Context: Current Date: ${currentDate}
     
-    Output Format: JSON string matching AnalysisResponse structure.
+    Output Format: STRICTLY return a valid JSON string matching this structure:
+    {
+      "extracted_location": "Village, District, State",
+      "narrative": {
+        "soil_condition_summary": "Summary of soil health...",
+        "weather_location_analysis": "Weather context...",
+        "soil_maintenance": ["Tip 1", "Tip 2"],
+        "production_increase_tips": ["Tip 1", "Tip 2"],
+        "fertilizer_recommendations": {
+          "chemical": ["Item 1"],
+          "organic": ["Item 2"]
+        },
+        "irrigation_requirements": "Requirements...",
+        "crop_suggestions": [
+          { "crop": "Name", "reasoning": "Reason..." }
+        ],
+        "disease_prediction": [
+          { "disease_name": "Name", "likelihood_reason": "Reason...", "preventative_measures": ["Measure 1"] } 
+        ]
+      },
+      "raw_data": {
+        "ph": { "name": "pH", "value": "7.0", "unit": "", "status": "Normal", "effect": "...", "recommendation": "..." },
+        "ec": { "name": "EC", "value": "...", "unit": "dS/m", "status": "...", "effect": "...", "recommendation": "..." },
+        "oc": { "name": "Organic Carbon", "value": "...", "unit": "%", "status": "...", "effect": "...", "recommendation": "..." },
+        "nitrogen": { "name": "Nitrogen", "value": "...", "unit": "kg/ha", "status": "...", "effect": "...", "recommendation": "..." },
+        "phosphorus": { "name": "Phosphorus", "value": "...", "unit": "kg/ha", "status": "...", "effect": "...", "recommendation": "..." },
+        "potassium": { "name": "Potassium", "value": "...", "unit": "kg/ha", "status": "...", "effect": "...", "recommendation": "..." },
+        "secondary": [ { "name": "Sulphur", "value": "...", "unit": "ppm", "status": "...", "effect": "...", "recommendation": "..." } ],
+        "micronutrients": [ { "name": "Zinc", "value": "...", "unit": "ppm", "status": "...", "effect": "...", "recommendation": "..." } ]
+      }
+    }
+    Translate all narrative content to ${language || 'English'}.
     `;
 
     const result = await model.generateContent([
@@ -279,23 +358,17 @@ app.post('/api/analyze-soil', async (req, res) => {
     ]);
 
     const responseText = result.response.text();
-
-    // JSON Cleanup Strategy
-    let jsonStr = responseText;
-    const codeBlockMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (codeBlockMatch) jsonStr = codeBlockMatch[1];
-    else {
-      const firstCurly = responseText.indexOf('{');
-      const lastCurly = responseText.lastIndexOf('}');
-      if (firstCurly !== -1 && lastCurly !== -1) jsonStr = responseText.substring(firstCurly, lastCurly + 1);
-    }
-
-    res.json(JSON.parse(jsonStr));
+    const parsed = cleanJson(responseText);
+    res.json(parsed);
   } catch (error) {
     console.error('Analyze Soil API Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+const port = process.env.PORT || 3001;
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+}
+
+export default app;

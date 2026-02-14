@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { AnalysisResponse, LanguageCode, NewsResponse, NewsItem, SchemeResponse, LabItem } from "../types";
 
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://kisan-setu-2fkdtlg3d-omkar0075s-projects.vercel.app') + '/api';
 
 // Helper to convert file to base64 for Gemini
 export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { data: string; mimeType: string } }> => {
@@ -22,7 +22,7 @@ export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { 
   });
 };
 
-const ALLORIGINS = import.meta.env.VITE_NEWS_PROXY_URL || process.env.NEWS_PROXY_URL || 'https://api.allorigins.win/raw?url=';
+const ALLORIGINS = import.meta.env.VITE_NEWS_PROXY_URL || 'https://api.allorigins.win/raw?url=';
 
 export const fetchPibPressReleases = async (location?: string): Promise<{ title: string; link: string }[]> => {
   try {
@@ -51,7 +51,7 @@ export const fetchPibPressReleases = async (location?: string): Promise<{ title:
     }
 
     return items;
-  } catch (error) {
+  } catch (error: any) {
     console.warn('Failed to fetch PIB press releases:', error);
     return [];
   }
@@ -75,23 +75,26 @@ export const fetchTimesOfIndia = async (section?: string): Promise<{ title: stri
     }
 
     return items;
-  } catch (error) {
+  } catch (error: any) {
     console.warn('Failed to fetch Times of India articles:', error);
     return [];
   }
 };
 
+type ChatMessagePart = { text: string } | { inlineData: { data: string; mimeType: string } };
+type ChatHistoryItem = { role: 'user' | 'model'; parts: ChatMessagePart[] };
+
 // Chat Session Logic interacting with Backend
-export const createAgriChatSession = (language: string, history: any[] = []) => {
+export const createAgriChatSession = (language: string, history: ChatHistoryItem[] = []) => {
 
   // Internal state to track history for this session instance (mimicking SDK behavior)
-  let sessionHistory = [...history];
+  let sessionHistory: ChatHistoryItem[] = [...history];
 
   return {
     // This sendMessage signature mimics the SDK's chatSession.sendMessage()
-    sendMessage: async (message: string | any[]) => {
+    sendMessage: async (message: string | ChatMessagePart[]) => {
       try {
-        const response = await axios.post(`${API_BASE_URL}/chat`, {
+        const response: AxiosResponse<{ text: string }> = await axios.post(`${API_BASE_URL}/chat`, {
           message: message,
           history: sessionHistory,
           language: language
@@ -101,7 +104,8 @@ export const createAgriChatSession = (language: string, history: any[] = []) => 
 
         // Update internal history with the turn
         // Note: We might need to adjust format if complex parts are used
-        sessionHistory.push({ role: 'user', parts: [{ text: typeof message === 'string' ? message : 'Image/Data' }] });
+        const userMessageParts: ChatMessagePart[] = typeof message === 'string' ? [{ text: message }] : message;
+        sessionHistory.push({ role: 'user', parts: userMessageParts });
         sessionHistory.push({ role: 'model', parts: [{ text: text }] });
 
         return {
@@ -110,7 +114,7 @@ export const createAgriChatSession = (language: string, history: any[] = []) => 
           }
         };
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Chat Backend Error:", error);
         throw error;
       }
@@ -128,7 +132,7 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
   const timesSummary = timesItems.length ? timesItems.map(t => `- ${t.title} (${t.link})`).join('\n') : '';
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/news`, {
+    const response: AxiosResponse<{ news: NewsItem[] }> = await axios.post(`${API_BASE_URL}/news`, {
       location,
       language,
       currentDate,
@@ -143,7 +147,7 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
 
     const sources: { title: string; uri: string }[] = [];
     if (parsedData.news) {
-      parsedData.news.forEach((n: any) => {
+      parsedData.news.forEach((n: NewsItem) => { // Explicitly type n as NewsItem
         if (n.link && n.source) sources.push({ title: n.source, uri: n.link });
       });
     }
@@ -157,7 +161,7 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
       sources: uniqueSources
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching news:", error);
     // Return fallback
     return {
@@ -178,12 +182,12 @@ export const getAgriculturalNews = async (location: string, language: LanguageCo
 
 export const getGovernmentSchemes = async (location: string, language: LanguageCode): Promise<SchemeResponse> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/schemes`, {
+    const response: AxiosResponse<SchemeResponse> = await axios.post(`${API_BASE_URL}/schemes`, {
       location,
       language
     });
     return response.data as SchemeResponse;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching schemes:", error);
     // Fallback Data (Restored from previous implementation to ensure robustness)
     return {
@@ -238,7 +242,7 @@ export const findNearbyPlaces = async (
 ): Promise<LabItem[]> => {
   try {
     const locationQuery = typeof location === 'string' ? location : `${location.lat}, ${location.lng}`;
-    const response = await axios.post(`${API_BASE_URL}/nearby-places`, {
+    const response: AxiosResponse<LabItem[]> = await axios.post(`${API_BASE_URL}/nearby-places`, {
       locationQuery,
       language
     });
@@ -250,7 +254,7 @@ export const findNearbyPlaces = async (
     // If empty array, throw to trigger fallback
     throw new Error("No places found from API");
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error finding nearby places (switching to fallback):", error);
 
     // FALLBACK: Use Smart Mock Data based on location (Logic restored from original implementation)
@@ -321,14 +325,14 @@ export const analyzeSoilReport = async (
   const currentDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/analyze-soil`, {
+    const response: AxiosResponse<AnalysisResponse> = await axios.post(`${API_BASE_URL}/analyze-soil`, {
       fileData,
       mimeType,
       language,
       currentDate
     });
     return response.data as AnalysisResponse;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing soil report:", error);
     throw new Error("Failed to analyze report.");
   }
