@@ -100,7 +100,8 @@ function App() {
   const handleFileUpload = async (file: File) => {
     setLoading(true);
     try {
-      const base64Data = await fileToGenerativePart(file);
+      const part = await fileToGenerativePart(file);
+      const base64Data = part.inlineData.data;
 
       // Infer MIME type if missing or generic
       let mimeType = file.type;
